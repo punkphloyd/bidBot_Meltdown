@@ -19,7 +19,6 @@ async def on_ready():
     print("Bot is ready - test bot {}".format(ver))
     print("------------------------------")
 
-
-
+#Test change
 
 bot.run(BOT_TOKEN)

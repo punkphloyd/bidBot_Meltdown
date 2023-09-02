@@ -1,5 +1,5 @@
 # apikeys file for storing tokens
-apikeys.py
+/apikeys.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

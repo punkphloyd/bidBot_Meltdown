@@ -85,6 +85,7 @@ class Bids(commands.Cog):
             
             # Print success to log file
             print(f"{bid_time} - Bid success: {bid_success} \n Message out: {message_out}", file=open(log_filename, 'a'))
+            
             ######### Note, when the bot is updated to include time-delayed bid application (either in accordance with the fixed 7 pm cut-off, or with the randomised time window) 
             ######### this is where the primary bid addition function will end. It will populate the array pending_bids and another function will pick up the pending bids at the appropriate time and apply them
             ######### Presently, however, the bid application code is below and part of this single function
@@ -112,6 +113,47 @@ class Bids(commands.Cog):
             else:                   # pre_points == 0 -> i.e. fresh bid on this item for this player
                 # Fresh bid - add new bid to this dictionary
                 all_bids[player] = bid_points
+
+                if debug_mode:
+                    print("New bid added:")
+                    print(all_bids)
+
+            # bid_conv function required to convert all points values into integer format (they are read from sheets as a string) - otherwise sort won't work
+            all_bids = bid_conv(all_bids)
+            # Sort bids dictionary by points bid
+            all_bids = bid_sort(all_bids)
+
+            if debug_mode:
+                print("Sorted bids: ")
+                print(all_bids)
+
+            if debug_mode:
+                # Printing out in debug mode to ensure that column and row being obtained is the one expected
+                print("column/row for bid_item: ")
+                col, row = find_cell(bid_item)
+                print(f"{col}{row}")
+
+                print("column/row for player: ")
+                colp, rowp = find_cell(player)
+                print(f"{colp}{rowp}")
+            
+            if debug_mode:
+                print(f"Implementing new bids onto {bid_item}")
+        
+            print(f"Adding bids: {all_bids} onto {bid_item}", file=open(log_filename, 'a'))
+            update_bids(bid_item, all_bids)
+
+            if debug_mode:
+                print("Bids implemented - hopefully")
+            # If successful, report in discord channel that player has successfully bid their points on the item
+            if bid_success:
+                await interaction.response.send_message(f"{player} has successfully placed a bid of {bid_points} points on {bid_item}")
+            # Otherwise, report to the player that the bid has failed and identify the diagnosed cause
+            else:
+                await interaction.response.send_message(f"The attempt for {player} to bid {bid_points} points on item {bid_item} was unsuccessful\n {message_out}")
+
+            
+            
             
             # FUNCTIONALITY TO BE ADDED IN V0.2 
             # Add successful bid to pending bids list
@@ -408,4 +450,7 @@ class Bids(commands.Cog):
         
 
 ######################################### FUNCTION END ##########################################
-    
+
+# Function to run the cog within the bot
+def setup(bot):
+    bot.add_cog(Bids(bot))

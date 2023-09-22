@@ -9,10 +9,11 @@ from google.oauth2 import service_account
 from sheets import sheet
 from utils import debug_mode
 from api_keys import *
-from datetime import date, time, datetime
+from datetime import datetime
 
 
-
+# Definition requirements to allow bot to interact appropriately in discord
+# If anything needs to be updated (e.g. admin-only commands) this would be adjusted accordingly
 intents = nextcord.Intents.default()
 intents.members = True
 intents.message_content = True
@@ -21,26 +22,89 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
-# Bot start function - prints out to terminal to signify debugging if debug_mode is true
+# Bot start function - prints out to terminal to aid debugging if debug_mode is true
 # Also opens logging file appropriately
 @bot.event
 async def on_ready():
+    # Date format to add to log file name (YYYYMMDD)
+    date_now = datetime.now()
+    date = date_now.strftime("%Y%m%d")
+    time = date_now.strftime("%H:%M:%S")
     if debug_mode:
-        print("Bot is ready - test bot {}".format(ver))
+        print(f"{date_now} Bot connection failure - test bot {ver}")
         print("------------------------------")
     
     # Prefix to log file 
     log_filename_pre = "./logs/bid_bot.log_"
-    # Date format to add to log file (YYYYMMDD)
-    date = datetime.now()
-    date = date.strftime(%Y%m%d)
     log_filename = log_filename_pre + date
+    # Should produce a log file unique to each day - will need to factor in some sort of cleanup routine on the system (probably via cron)
+    # So that only 1 week of log files are retained
     
     # Check if log file already exists, if so open as append; otherwise open to write
     if os.path.exists(log_filename):
         log_file = open(log_filename, 'a')
     else:
         log_file = open(log_filename, 'w')
+
+    # Print opening line to log file
+    print(f"Bot starting at {time}", file=log_file)
+
+
+# Bot fail/disconnect function - prints out to terminal to aid debugging if debug_mode is true
+# Report failure to log file
+@bot.event
+async def on_disconnect():
+    # Date format to add to log file name (YYYYMMDD)
+    date_now = datetime.now()
+    date = date_now.strftime("%Y%m%d")
+    time = date_now.strftime("%H:%M:%S")
+    if debug_mode:
+        print(f"{date_now} Bot connection failure - test bot {ver}")
+        print("------------------------------")
+
+    # Prefix to log file
+    log_filename_pre = "./logs/bid_bot.log_"
+    log_filename = log_filename_pre + date
+    # Should produce a log file unique to each day - will need to factor in some sort of cleanup routine on the system (probably via cron)
+    # So that only 1 week of log files are retained
+
+    # Check if log file already exists, if so open as append; otherwise open to write
+    if os.path.exists(log_filename):
+        log_file = open(log_filename, 'a')
+    else:
+        log_file = open(log_filename, 'w')
+
+    # Print opening line to log file
+    print(f"Bot failed to connect, or disconnected abruptly, at {time}", file=log_file)
+
+
+# Bot close function - prints out to terminal to aid debugging if debug_mode is true
+# Report close to log file
+@bot.event
+async def on_close():
+    # Date format to add to log file name (YYYYMMDD)
+    date_now = datetime.now()
+    date = date_now.strftime("%Y%m%d")
+    time = date_now.strftime("%H:%M:%S")
+    if debug_mode:
+        print(f"{date_now} Bot closed - test bot {ver}")
+        print("------------------------------")
+
+    # Prefix to log file
+    log_filename_pre = "./logs/bid_bot.log_"
+    log_filename = log_filename_pre + date
+    # Should produce a log file unique to each day - will need to factor in some sort of cleanup routine on the system (probably via cron)
+    # So that only 1 week of log files are retained
+
+    # Check if log file already exists, if so open as append; otherwise open to write
+    if os.path.exists(log_filename):
+        log_file = open(log_filename, 'a')
+    else:
+        log_file = open(log_filename, 'w')
+
+    # Print opening line to log file
+    print(f"Bot closed at {time}", file=log_file)
+
 
 # Simple test command - remove prior to pushing production version
 @bot.slash_command(guild_ids=[test_server_id], name="test", description="Slash commands test")

@@ -1,8 +1,9 @@
 import nextcord
 from nextcord import Interaction
+# Contains all the buttons relevant to dynamis options - relic, tav, DL
 
 
-
+# Relic buttons (Head/Body/Hands/Legs/Feet + -1s + Accessory)
 class RelicButtons(nextcord.ui.View):
     def __init__(self):
         super().__init__()
@@ -75,6 +76,7 @@ class RelicButtons(nextcord.ui.View):
         self.stop()
 
 
+# Dyna lord item buttons (ring/mantle)
 class DynaLButtons(nextcord.ui.View):
     def __init__(self):
         super().__init__()
@@ -93,6 +95,7 @@ class DynaLButtons(nextcord.ui.View):
         self.stop()
 
 
+# Dyna tav buttons (currently not coded)
 class DynaTButtons(nextcord.ui.View):
     def __init__(self):
         super().__init__()

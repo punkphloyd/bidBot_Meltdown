@@ -2,6 +2,8 @@ import nextcord
 from nextcord import Interaction
 
 
+# This python file contains the classes for 2nd level buttons, those outlining the options within each area once an area is selected
+# (e.g, Sky is selected --> SkyButtons() contains buttons for Kirin/Byakko/Genbu, etc..)
 class SkyButtons(nextcord.ui.View):
     def __init__(self):
         super().__init__()
@@ -36,6 +38,7 @@ class SkyButtons(nextcord.ui.View):
         await interaction.response.send_message("Suzaku bids", ephemeral=True)
         self.god = 'Suzaku'
         self.stop()
+
 
 class SeaButtons(nextcord.ui.View):
     def __init__(self):
@@ -97,6 +100,7 @@ class SeaButtons(nextcord.ui.View):
         self.stop()
 
 
+# Dynamis buttons - covers DL, DTav (hydra etc.?), Relic drops
 class DynaButtons(nextcord.ui.View):
     def __init__(self):
         super().__init__()
@@ -143,7 +147,6 @@ class DynaButtons(nextcord.ui.View):
         await interaction.response.send_message("DRK", ephemeral=True)
         self.god = 'DRK'
         self.stop()
-
 
     @nextcord.ui.button(label="MNK", style=nextcord.ButtonStyle.grey)
     async def mnk_bids(self, button: nextcord.ui.Button, interaction: Interaction):
@@ -206,6 +209,7 @@ class DynaButtons(nextcord.ui.View):
         self.stop()
 
 
+# Limbus buttons - Omega/Ultima
 class LimbusButtons(nextcord.ui.View):
     def __init__(self):
         super().__init__()
@@ -224,6 +228,7 @@ class LimbusButtons(nextcord.ui.View):
         self.stop()
 
 
+# HNMs (ground kings + lesser HNMs) - could be expanded?
 class HNMSButtons(nextcord.ui.View):
     def __init__(self):
         super().__init__()

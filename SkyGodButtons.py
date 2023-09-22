@@ -1,5 +1,6 @@
 import nextcord
 from nextcord import Interaction
+# Buttons for sky gods
 
 
 class KirinButtons(nextcord.ui.View):

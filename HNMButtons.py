@@ -1,5 +1,6 @@
 import nextcord
 from nextcord import Interaction
+# Buttons for the numerous HNMs available in the bidding system (ground kings, etc.)
 
 
 class BeheButtons(nextcord.ui.View):

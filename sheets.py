@@ -2,25 +2,37 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account
-from apikeys import *
+from api_keys import *
 import functools
 from utils import debug_mode
+from datetime import datetime
 
+
+# Scripts to interface and update the google sheets appropriately
+# Define google sheets credentials (need to update for accessing other sheets beyond test sheet)
 creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
 service = build('sheets', 'v4', credentials=creds)
 
+# Get spreadsheet
 sheet = service.spreadsheets()
+
+# Get roster sheet and roster values (values -> list of lists, containing the actual cell data)
 roster_sheet = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range="Roster!A1:T50").execute()
 roster_values = roster_sheet.get('values', [])
+# Get bids sheet and bids values
 bid_sheet = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range="Bids!A1:AT500").execute()
 bid_values = bid_sheet.get('values', [])
 
+# Get sheet and values for event tracker (currently not part of bot implementation -> potential future functionality)
 event_sheet = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range="Event Tracker!A1:BJ50").execute()
 event_values = event_sheet.get('values', [])
 
+# Get sheet and values for points (used to check user has sufficient points to place a bid)
 points_sheet = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range="Points!A1:F50").execute()
 points_values = points_sheet.get('values', [])
+
+
 
 
 # Function to check that the player bidding is present on the roster
@@ -56,16 +68,28 @@ def check_points(player, points):
             if rows[0] == player:
                 if int(rows[4]) >= int(points):
                     has_points = True
-                    print(f"{player} has  {rows[4]} points, this is greater than the {points} required - SUCCESS")
+                    if debug_mode:
+                        print(f"{player} has  {rows[4]} points, this is greater than the {points} required - SUCCESS")
                     break
                 else:
                     has_points = False
-                    print(f"{player} does not have at least {points} points; they only have {rows[4]} points - FAIL")
+                    if debug_mode:
+                        print(f"{player} does not have at least {points} points; they only have {rows[4]} points - FAIL")
     return has_points
 
 
 # Single function to carry out all checks and collect any errors accordingly
 def check_bid(player, item, points):
+    # Date format to add to log file name (YYYYMMDD)
+    date_now = datetime.now()
+    date = date_now.strftime("%Y%m%d")
+    time = date_now.strftime("%H:%M:%S")
+
+    # Prefix to log file
+    log_filename_pre = "./logs/bid_bot.log_"
+    log_filename = log_filename_pre + date
+    # Should produce a log file unique to each day - will need to factor in some sort of cleanup routine on the system (probably via cron)
+    # So that only 1 week of log files are retained
 
     bid_success = False
     # Check if player exists in roster, otherwise failed bid
@@ -81,27 +105,38 @@ def check_bid(player, item, points):
             if valid_points and has_points:
                 if debug_mode:
                     print("All conditions met for bid - SUCCESS")
-                    bid_success = True
-                    valid_bid = "Bid successful"
-                    return bid_success, valid_bid
+                bid_success = True
+                valid_bid = "Bid successful"
+                return bid_success, valid_bid
             else:
                 if not valid_points:
                     points_not_valid = "You did not enter an acceptable input for points, please only enter integers greater than or equal to one"
                     bid_success = False
+                    if debug_mode:
+                        print(f"{points} is not an acceptable input")
                     return bid_success, points_not_valid
                 elif not has_points:
                     points_not_present = f"{player} does not have at least {points} points to fulfill this bid"
                     bid_success = False
+                    if debug_mode:
+                        print(f"{player} does not have at least {points} points")
                     return bid_success, points_not_present
 
         else:
             item_not_present = f"{item} is not present on the biddable items list"
+            if debug_mode:
+                print(f"{item} is not an present on the biddable items list")
             bid_success = False
             return bid_success, item_not_present
     else:
         player_not_present = f"{player} is not present on the roster"
         bid_success = False
+        if debug_mode:
+            print(f"{player} is not present on the roster")
         return bid_success, player_not_present
+
+    if bid_success:
+        print(f" {time}: Bid success = {bid_success}", file=open(log_filename, 'a'))
 
 
 # Function to return the existing number of points bid by a player on an item (if any)
@@ -127,8 +162,9 @@ def get_all_bids(item):
             if len(rows) == 1:
                 return None
             else:
-                bid_pairs_len = len(rows) - 1
-                for i in range(1,bid_pairs_len+1,2):
+                bid_pairs_len = len(rows) - 1 # Number of bid name+points cells is the total row length, less one for the item name
+                # Run over the length of the list and use every odd entry as a name (key) with the following even entry as the points bid (value)
+                for i in range(1, bid_pairs_len+1, 2):
                     all_bids[rows[i]] = int(rows[i+1])
 
     return all_bids
@@ -138,14 +174,16 @@ def get_all_bids(item):
 # Should only be used for item labels (possibly player labels also, but with caution)
 # For items in bids and players on roster this should always be column 'A'
 # However function is kept generic to allow for future requirements
+# Response currently unknown if attempting to findcell with content that appears in more than one cell (e.g. a player name on the bids sheet)
 def find_cell(text):
     not_item = False
     not_player = False
+    # Start at A1 (1,1)
     row_num = 1
     col_num = 1
-    # Check items
-    for row in bid_values:
-        if text in row:
+    # Check items on bids sheet first - this may need to switch ; error if inputting player name, and it checks bid sheet first?
+    for row in bid_values:                              # Check each row in bid sheet values
+        if text in row:                                 # When saught text found within row, define col_num as the index within the row and +1 (count from 0 vs 1)
             col_num = row.index(text) + 1
             break
         row_num = row_num + 1

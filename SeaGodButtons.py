@@ -1,5 +1,7 @@
 import nextcord
 from nextcord import Interaction
+# Buttons for sea gods (AV / Jailers / Aerns)
+
 
 class AVButtons(nextcord.ui.View):
     def __init__(self):

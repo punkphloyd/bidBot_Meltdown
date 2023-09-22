@@ -1,5 +1,6 @@
 import nextcord
 from nextcord import Interaction
+# Contains Limbus buttons (present omega/ultima) with homam/nashira
 
 
 class OmegaButtons(nextcord.ui.View):

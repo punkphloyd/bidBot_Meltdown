@@ -33,8 +33,6 @@ points_sheet = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range="Points!A1
 points_values = points_sheet.get('values', [])
 
 
-
-
 # Function to check that the player bidding is present on the roster
 def check_roster(player):
     player_present = False
@@ -181,24 +179,24 @@ def find_cell(text):
     # Start at A1 (1,1)
     row_num = 1
     col_num = 1
-    # Check items on bids sheet first - this may need to switch ; error if inputting player name, and it checks bid sheet first?
-    for row in bid_values:                              # Check each row in bid sheet values
+    # Check players on roster sheet first
+    for row in roster_values:                              # Check each row in roster sheet values
         if text in row:                                 # When saught text found within row, define col_num as the index within the row and +1 (count from 0 vs 1)
             col_num = row.index(text) + 1
             break
         row_num = row_num + 1
-        if row == bid_values[len(bid_values)-1]:
-            not_item = True
+        if row == roster_values[len(roster_values)-1]:
+            not_player = True
 
-    if not_item:
+    if not_player:
         row_num = 1
         col_num = 1
-        for row in roster_values:
+        for row in bid_values:
             if text in row:
                 col_num = row.index(text) + 1
                 break
             row_num = row_num + 1
-            if row == roster_values[len(roster_values)-1]:
+            if row == bid_values[len(bid_values)-1]:
                 not_player = True
 
     # if the result cannot be found in either items list or players list then simply return 0, 0
@@ -217,6 +215,9 @@ def update_bids(item, dicto):
     # Find cell for item
     col, row = find_cell(item)
     updated_cell = str(col) + str(row)
+
+    if debug_mode:
+        print(f"Col: {col} - Row: {row}")
 
     if col != 'A':
         if debug_mode:

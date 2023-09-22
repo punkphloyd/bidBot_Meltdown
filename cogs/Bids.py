@@ -375,6 +375,9 @@ class Bids(commands.Cog):
         # Perform bid validity test and respond accordingly
         bid_success, message_out = check_bid(player, bid_item, bid_points)
 
+        if not bid_success:
+            print("bid failed")
+            return
         # This bid_points int conversion needs to take place after the above check_bid function
         # otherwise function hangs/fails due to lack of isnumeric() function in the int type
         bid_points = int(bid_points)
@@ -446,10 +449,10 @@ class Bids(commands.Cog):
             print("Bids implemented - hopefully")
         # If successful, report in discord channel that player has successfully bid their points on the item
         if bid_success:
-            await interaction.response.send_message(f"{player} has successfully placed a bid of {bid_points} points on {bid_item}")
+            await interaction.followup.send(f"{player} has successfully placed a bid of {bid_points} points on {bid_item}")
         # Otherwise, report to the player that the bid has failed and identify the diagnosed cause
         else:
-            await interaction.response.send_message(f"The attempt for {player} to bid {bid_points} points on item {bid_item} was unsuccessful\n {message_out}")
+            await interaction.followup.send(f"The attempt for {player} to bid {bid_points} points on item {bid_item} was unsuccessful\n {message_out}")
 
 
 ######################################### FUNCTION END ##########################################

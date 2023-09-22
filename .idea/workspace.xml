@@ -4,18 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b8932b08-bbed-4394-aa56-fcbb0a6a9d34" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/AreaButtons.py" beforeDir="false" afterPath="$PROJECT_DIR$/AreaButtons.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DynaButtons.py" beforeDir="false" afterPath="$PROJECT_DIR$/DynaButtons.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/HNMButtons.py" beforeDir="false" afterPath="$PROJECT_DIR$/HNMButtons.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LimbusButtons.py" beforeDir="false" afterPath="$PROJECT_DIR$/LimbusButtons.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SeaGodButtons.py" beforeDir="false" afterPath="$PROJECT_DIR$/SeaGodButtons.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SkyGodButtons.py" beforeDir="false" afterPath="$PROJECT_DIR$/SkyGodButtons.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cogs/Bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/cogs/Bids.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sheets.py" beforeDir="false" afterPath="$PROJECT_DIR$/sheets.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
-    </list>
+    <list default="true" id="b8932b08-bbed-4394-aa56-fcbb0a6a9d34" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

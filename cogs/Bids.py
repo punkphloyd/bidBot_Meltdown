@@ -72,10 +72,16 @@ class Bids(commands.Cog):
             print("Bid Function Debugging")
         bid_time = datetime.now()  # Presently unused - will be possibly needed when 7 pm implementation comes in
 
+        date_now = datetime.now()
+        date_in = date_now.strftime("%Y%m%d")
+        # Prefix to log file
+        log_filename_pre = "./logs/bid_bot.log_"
+        log_filename = log_filename_pre + date_in
+
         # Transform player and item to title case - matches google sheets
         player = player.title()
-        item = item.title()
-        points = int(points)
+        bid_item = item.title()
+        bid_points = int(points)
         # Perform bid validity test and respond accordingly
         bid_success, message_out = check_bid(player, item, points)
 
@@ -191,6 +197,12 @@ class Bids(commands.Cog):
     async def bid_buttons(self, interaction: Interaction, bid_points):
         bid_time = datetime.now()  # Get time of bid
 
+        date_now = datetime.now()
+        date_in = date_now.strftime("%Y%m%d")
+        # Prefix to log file
+        log_filename_pre = "./logs/bid_bot.log_"
+        log_filename = log_filename_pre + date_in
+
         view = BidButtons()  # Output for Sky/Sea etc. choice
         view2 = None  # To be re-assigned later, pending initial EG Area choice
         view3 = None  # To be re-assigned later, pending initial EG Area choice
@@ -199,9 +211,9 @@ class Bids(commands.Cog):
 
         player = interaction.user.display_name  # Get player name from discord user displayname
         if debug_mode:
-            print(f"{bid_time.hour}{bidtime.minute} User running /bid2 is {player}")
+            print(f"{bid_time.hour}{bid_time.minute} User running /bid2 is {player}")
 
-        if view.value == None:
+        if view.value is None:
             if debug_mode:
                 print("View value of none has been reached - this should not be encountered; please examine logs")
             print(f"{player} has attempted a bid at {datetime} which has produced a view.value == None result", file=open(log_filename, 'a'))

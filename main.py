@@ -31,9 +31,15 @@ async def on_ready():
     date = date_now.strftime("%Y%m%d")
     time = date_now.strftime("%H:%M:%S")
     if debug_mode:
-        print(f"{date_now} Bot connection failure - test bot {ver}")
+        print(f"{date_now} Bot connection commenced - test bot {ver}")
         print("------------------------------")
-    
+
+    # Check if logs directory exists, and create if it does not
+    logs_dir = "./logs/"
+    logs_dir_exists = os.path.exists(logs_dir)
+
+    if not logs_dir_exists:
+        os.makedirs(logs_dir)
     # Prefix to log file 
     log_filename_pre = "./logs/bid_bot.log_"
     log_filename = log_filename_pre + date

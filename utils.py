@@ -19,3 +19,5 @@ def bid_conv(bid_dict):
         bid_dict[key] = int_tmp
 
         return bid_dict
+
+# This is a test that should only appear on the beta0.2 branch

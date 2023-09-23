@@ -3,6 +3,7 @@
 /api_keys.py
 /sheets_keys.json
 logs/*
+.idea/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

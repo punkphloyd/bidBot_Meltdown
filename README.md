@@ -1,2 +1,2 @@
-# bidBot-beta0.1
-Initial beta version of bidBot for Meltdown EGLS
+# bidBot_Meltdown
+Bid Bot for Meltdown EGLS

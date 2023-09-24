@@ -11,6 +11,7 @@ from datetime import date, time, datetime
 import time
 from sheets import *
 from utils import debug_mode, bid_sort, bid_conv
+from main import pending_bids
 
 
 # BidButtons class - this defines the top level set of buttons with which users will be presented upon the /bid2 function
@@ -57,7 +58,7 @@ class Bids(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.pending_bids = []  # Presently unused functionality - will be used to implement time delay to bid processing (7 pm GMT for bid application)
+        #self.pending_bids = []  # Used for delayed bid processing (bids are written to this list and then applied via another function @ 7pm the following day)
 
     #########################################  BID FUNCTION #########################################
 
@@ -71,6 +72,9 @@ class Bids(commands.Cog):
         if debug_mode:
             print("Bid Function Debugging")
         bid_time = datetime.now()  # Presently unused - will be possibly needed when 7 pm implementation comes in
+        bid_time_hm = bid_time.strftime("%H:%M")
+        bid_time_date = bid_time.strftime("%d")
+        bid_time_month = bid_time.strftime("%m")
 
         date_now = datetime.now()
         date_in = date_now.strftime("%Y%m%d")
@@ -91,6 +95,9 @@ class Bids(commands.Cog):
 
             # Print success to log file
             print(f"{bid_time} - Bid success: {bid_success} \n Message out: {message_out}", file=open(log_filename, 'a'))
+
+            bid = [bid_time_date, bid_time_month, bid_time_hm, player, bid_item, bid_points]
+            pending_bids.append(bid)
 
             ######### Note, when the bot is updated to include time-delayed bid application (either in accordance with the fixed 7 pm cut-off, or with the randomised time window) 
             ######### this is where the primary bid addition function will end. It will populate the array pending_bids and another function will pick up the pending bids at the appropriate time and apply them

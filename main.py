@@ -11,6 +11,7 @@ from utils import debug_mode
 from api_keys import *
 from datetime import datetime
 
+pending_bids = []
 
 # Definition requirements to allow bot to interact appropriately in discord
 # If anything needs to be updated (e.g. admin-only commands) this would be adjusted accordingly
@@ -54,6 +55,10 @@ async def on_ready():
 
     # Print opening line to log file
     print(f"Bot starting at {time}", file=log_file)
+
+    # Testing bot capability to print out to server channel
+    channel = bot.get_channel(1146212963758391409)
+    await channel.send("Bot starting up! Please place your bids")
 
 
 # Bot fail/disconnect function - prints out to terminal to aid debugging if debug_mode is true
@@ -120,6 +125,8 @@ async def test(interaction: Interaction):
 # Load relevant cogs to support bot
 bot.load_extension("cogs.Bids")
 
+if __name__ == '__main__':
+    print(pending_bids)
 
 # Run bot from main 
 if __name__ == '__main__':

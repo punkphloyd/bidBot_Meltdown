@@ -1,5 +1,5 @@
 import nextcord
-from nextcord.ext import commands
+from nextcord.ext import commands, tasks
 import os
 from nextcord import Interaction
 from googleapiclient.discovery import build
@@ -7,9 +7,33 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 from sheets import sheet
-from utils import debug_mode
+from utils import *
 from api_keys import *
 from datetime import datetime
+import asyncio
+import schedule
+
+
+# Test job for schedule-driver output
+# This job will print to the new-test-channel
+def print_job():
+    print("test job print - alternate")
+    #channel = bot.get_channel(1155482375422218250)
+    #date_time = datetime.now()
+    #print(channel)
+    #channel.send(f"Sending alternate message @ {date_time}")
+
+    #channel.send("alternate test")
+
+
+schedule.every(10).seconds.do(print_job)
+
+
+async def task():
+    while True:
+        schedule.run_pending()
+        await asyncio.sleep(1)
+
 
 pending_bids = []
 
@@ -27,6 +51,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # Also opens logging file appropriately
 @bot.event
 async def on_ready():
+    bot.loop.create_task(task())
     # Date format to add to log file name (YYYYMMDD)
     date_now = datetime.now()
     date = date_now.strftime("%Y%m%d")
@@ -36,17 +61,15 @@ async def on_ready():
         print("------------------------------")
 
     # Check if logs directory exists, and create if it does not
-    logs_dir = "./logs/"
     logs_dir_exists = os.path.exists(logs_dir)
-
     if not logs_dir_exists:
         os.makedirs(logs_dir)
-    # Prefix to log file 
-    log_filename_pre = "./logs/bid_bot.log_"
+
+    # Log file name = pre + date
     log_filename = log_filename_pre + date
     # Should produce a log file unique to each day - will need to factor in some sort of cleanup routine on the system (probably via cron)
     # So that only 1 week of log files are retained
-    
+
     # Check if log file already exists, if so open as append; otherwise open to write
     if os.path.exists(log_filename):
         log_file = open(log_filename, 'a')
@@ -124,10 +147,10 @@ async def test(interaction: Interaction):
 
 # Load relevant cogs to support bot
 bot.load_extension("cogs.Bids")
+bot.load_extension("cogs.Scheduler")
 
 if __name__ == '__main__':
     print(pending_bids)
-
-# Run bot from main 
+# Run bot from main
 if __name__ == '__main__':
     bot.run(BOT_TOKEN)

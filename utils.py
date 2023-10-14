@@ -31,11 +31,12 @@ def bid_conv(bid_dict):
 # Function to write bid out to bid datafile (will be called by both bid submission routines)
 def bid_write(bid):
     # Check bid contains appropriate number of elements
-    # Should contain player name, bid item, points of bid, time of bid, date of bid
+    # Should contain:
+    # Bid Month, Bid Date, Bid Time, Player, Item, Points
     # If not, print message and return out of function
     elements = len(bid)
-    if elements != 5:
-        print(f"Attempting to write a bid with an incorrect number of elements - should contain 5 elements, instead contains {elements}")
+    if elements != 6:
+        print(f"Attempting to write a bid with an incorrect number of elements - should contain 6 elements, instead contains {elements}")
         return False
     else:
         if debug_mode:
@@ -46,7 +47,7 @@ def bid_write(bid):
         for item in bid:
             print(item + "\t", file=open(bids_filename, 'a'))
     else:
-        print("# Bids data", file=open(bids_filename, 'w'))
+        print("# Month\tDate\tTime\tPlayer\tItem\tPoints", file=open(bids_filename, 'w'))
         for item in bid:
             print(item + "\t", file=open(bids_filename, 'a'))
     return True

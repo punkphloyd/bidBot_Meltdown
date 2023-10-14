@@ -209,7 +209,6 @@ def find_cell(text):
 
 
 # This function updates the array of bids to reflect the new bid
-# Needs to
 def update_bids(item, dicto):
 
     # Find cell for item

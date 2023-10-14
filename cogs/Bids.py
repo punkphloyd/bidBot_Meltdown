@@ -10,7 +10,7 @@ from DynaButtons import *
 from datetime import date, time, datetime
 import time
 from sheets import *
-from utils import debug_mode, bid_sort, bid_conv
+from utils import debug_mode, bid_sort, bid_conv, bid_write
 #from main import pending_bids
 
 
@@ -69,9 +69,20 @@ class Bids(commands.Cog):
 
     @nextcord.slash_command(name="bid", description="Bidbot bid function", guild_ids=[test_server_id])
     async def bid(self, interaction: Interaction, player, item, points):
+        # Temporary: make function only accessible to admins
+        role = nextcord.utils.get(interaction.guild.roles, name="Admin")
+        if role in interaction.user.roles:
+            if debug_mode:
+                print(f"{interaction.user.display_name} has the role {role} - may successfully use the /bid function")
+        else:
+            if debug_mode:
+                await interaction.send("You must be an admin to use this command")
+                print(f"{interaction.user.display_name} does not have the role {role} - may not use the /bid function")
+            return
+
         if debug_mode:
             print("Bid Function Debugging")
-        bid_time = datetime.now()  # Presently unused - will be possibly needed when 7 pm implementation comes in
+        bid_time = datetime.now()
         bid_time_hm = bid_time.strftime("%H:%M")
         bid_time_date = bid_time.strftime("%d")
         bid_time_month = bid_time.strftime("%m")
@@ -86,6 +97,19 @@ class Bids(commands.Cog):
         player = player.title()
         bid_item = item.title()
         bid_points = int(points)
+
+        # Bid is not checked as valid yet
+        # (since it may be part of multiple bids in sequence but only applied at 7pm, the points check needs to be later)
+        # Invoke bid write function to capture bid in appropriate datafile
+        bid = [bid_time_month, bid_time_date, bid_time_hm, player, bid_item, bid_points]
+        if debug_mode:
+            print(f"Bid to be written: {bid}")
+        print(f"{bid_time} - Writing {bid} to file {log_filename}",file=open(log_filename,'a'))
+        bid_write(bid)
+
+
+        # ********** NEED TO REMOVE FROM BELOW THIS LINE FOR DELAYED BID APPLICATION METHOD ************* #
+
         # Perform bid validity test and respond accordingly
         bid_success, message_out = check_bid(player, item, points)
 
@@ -96,7 +120,8 @@ class Bids(commands.Cog):
             # Print success to log file
             print(f"{bid_time} - Bid success: {bid_success} \n Message out: {message_out}", file=open(log_filename, 'a'))
 
-            bid = [bid_time_date, bid_time_month, bid_time_hm, player, bid_item, bid_points]
+            bid = [bid_time_month, bid_time_date, bid_time_hm, player, bid_item, bid_points]
+
 
 
             ######### Note, when the bot is updated to include time-delayed bid application (either in accordance with the fixed 7 pm cut-off, or with the randomised time window) 
@@ -202,6 +227,17 @@ class Bids(commands.Cog):
     # Currently (21/09/23) this would require Unholy, Zonero, Elensar, Annasion, Nuppy, Sanarau to change their display names  
     @nextcord.slash_command(name="bid2", description="Content for items to bid on", guild_ids=[test_server_id])
     async def bid_buttons(self, interaction: Interaction, bid_points):
+        # Temporary: make function only accessible to admins
+        role = nextcord.utils.get(interaction.guild.roles, name="Admin")
+        if role in interaction.user.roles:
+            if debug_mode:
+                print(f"{interaction.user.display_name} has the role {role} - may successfully use the /bid function")
+        else:
+            if debug_mode:
+                await interaction.send("You must be an admin to use this command")
+                print(f"{interaction.user.display_name} does not have the role {role} - may not use the /bid function")
+            return
+
         bid_time = datetime.now()  # Get time of bid
 
         date_now = datetime.now()

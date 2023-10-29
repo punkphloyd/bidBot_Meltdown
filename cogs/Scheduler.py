@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, time
 import os
 import random
 
@@ -8,20 +8,22 @@ from nextcord.ext import commands, tasks
 from sheets import *
 from utils import *
 
-# Define UTC (shouldn't matter really)
-utc = datetime.timezone.utc
-
 # Time for random bid close generation (i.e. midnight/0001)
-bid_close_gener_time = datetime.time(hour=0, minute=1)
+bid_close_gener_time = time(hour=0, minute=1)
 
-# Time for bid application & writing to spreadsheet (1900)
-bid_application_time = datetime.time(hour=19, minute=0)
+# Time for bid application & writing to spreadsheet (2350)
+# This application time ensures bids will not be updated mid-event, and only 'take effect' the following day
+bid_application_time = time(hour=23, minute=50)
+
+# Two processes above (bid close time generation & bid application time) could probably be combined into a single time
+# And managed via a single function
+# TO DO: Consider amalgamation of these two functions
 
 
 class Scheduler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.apply_bids.start()
+        self.apply_bids.start()         # Start the scheduler for time based functions
         self.generate_bid_close.start()
         if debug_mode:
             print(f"{bid_application_time} is the bid application time")
@@ -61,32 +63,40 @@ class Scheduler(commands.Cog):
         date = datetime.now()
         date = date.strftime("%Y%m%d")
         log_filename = log_filename_pre + date
+
         if debug_mode:
             print(f"It is {bid_application_time}, the program will now examine the day's bids and push valid bids to sheet")
         channel = self.bot.get_channel(bids_channel_id)
-        await channel.send(f"Activating bids from today")
+        await channel.send(f"Activating bids from {date}")
+        # Initialise bid close time (bid_ct) and bid close file (bcf) prior to definition / reading
         bid_ct = 0
         bcf = None
-        # Check if data directory exists, it not then create it
-        data_dir = "./data/"
+        # Check if data directory exists, it not then create it (should exist)
         data_dir_exists = os.path.exists(data_dir)
         if not data_dir_exists:
+            if debug_mode:
+                print(f"Data directory {data_dir} did not exist, creating now")
             os.makedirs(data_dir)
 
         # Check bit deadline file exists, otherwise return an error
         bid_close_file = data_dir + "bid_close.tme"
         if os.path.exists(bid_close_file):
             bcf = open(bid_close_file, 'r')
+            print(f"{bid_close_file} opened for reading", file=open(log_filename, 'a'))
         else:
             if debug_mode:
                 print(f"Bid close timestamp file {bid_close_file} does not exist")
             await channel.send("Bid close timestamp file could not be found - see logs for further information")
+            print(f"Error - unable to find bid deadline file {bid_close_file}", file=open(log_filename, 'a'))
             return
+        # Read contents of bid close file (should be single line containing a single timestamp)
         for line in bcf:
             if debug_mode:
                 print(line)
             bid_ct = line
         bcf.close()
+
+        print(f"Bid close time for {date}: {bid_ct}", file=open(log_filename, 'a'))
 
         if debug_mode:
             print(f"Bid close time is : {bid_ct}")
@@ -102,6 +112,7 @@ class Scheduler(commands.Cog):
             if debug_mode:
                 print(f"Failed to open bids data file: {bids_data_file}")
             await channel.send("Bids data file could not be opened - please see logs for further details")
+            print(f"{date}: {time} - Failed to open bid file: {bids_data_file}", file=open(log_filename, 'a'))
             return
 
         # Cycle through bids data file and check if bid is good or bad
@@ -112,19 +123,27 @@ class Scheduler(commands.Cog):
             if debug_mode:
                 print(line)
             bid = line
-            bid_success, message_out = check_bid(bid)       # check_bid routine needs overloading to take bid argument directly
-
+            # Check if bid contains correct number of line items
+            if len(bid) != 6:
+                if debug_mode:
+                    print(f"Bid: {bid} should be 6 items in length. It is {len(bid)}")
+                print(f"Bid: {bid} should be 6 items in length. It is {len(bid)}", file=open(log_filename, 'a'))
+                continue
+            # Check if bid is good using player, item, and points values
+            bid_success, message_out = check_bid(bid[3],bid[4],bid[5])       
             if bid_success:
                 await channel.send(f"Successful bid: {bid[3]} has bid {bid[5]} points on {bid[4]}")
                 # Print success to log file
                 print(f"{bid[2]} - Bid success: {bid_success} \n Message out: {message_out}", file=open(log_filename, 'a'))
 
-                # Get all existing bids on the corresponding item
+                # Copy logic from previous (non time-delay) routine for writing to sheets
+                # Get all existing bids on the corresponding item, and check if player already has an existing bid in place
                 all_bids = get_all_bids(bid[4])
                 if debug_mode:
                     print("Original bids: ")
                     print(all_bids)
-
+                if bid[3] in all_bids.keys():
+                    pre_bid = all_bids[bid[3]]
 
 # Function to run the cog within the bot
 def setup(bot):

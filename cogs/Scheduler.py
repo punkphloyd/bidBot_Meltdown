@@ -54,7 +54,6 @@ class Scheduler(commands.Cog):
         random_hour = int(random_time/60)
         random_min = (random_time - 60*random_hour)
 
-
         bid_close_hour = 16 + int(random_hour)
         bid_close_min = 0 + int(random_min)
         # Need this segment to prevent 3 digit timestamps from occurring for minutes returned with single digits
@@ -147,6 +146,13 @@ class Scheduler(commands.Cog):
             player = bid[3]
             item = bid[4]
             points = bid[5]
+            level = int(bid[6])
+            # Check level to determine 65+ or <65 (bids <65 will be recorded in red)
+            if level >= 65:
+                over65 = True
+            else:
+                over65 = False
+
             date = int(bid[1])
             month = int(bid[0])
             bid_time = bid[2]

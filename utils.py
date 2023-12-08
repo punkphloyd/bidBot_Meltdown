@@ -35,8 +35,8 @@ def bid_write(bid):
     # Bid Month, Bid Date, Bid Time, Player, Item, Points
     # If not, print message and return out of function
     elements = len(bid)
-    if elements != 6:
-        print(f"Attempting to write a bid with an incorrect number of elements - should contain 6 elements, instead contains {elements}")
+    if elements != 7:
+        print(f"Attempting to write a bid with an incorrect number of elements - should contain 7 elements, instead contains {elements}")
         return False
     else:
         if debug_mode:
@@ -47,7 +47,7 @@ def bid_write(bid):
         for item in bid:
             print(item + "\t", file=open(bids_filename, 'a'))
     else:
-        print("# Month\tDate\tTime\tPlayer\tItem\tPoints", file=open(bids_filename, 'w'))
+        print("# Month\tDate\tTime\tPlayer\tItem\tPoints\tPlayerLevel", file=open(bids_filename, 'w'))
         for item in bid:
             print(item + "\t", file=open(bids_filename, 'a'))
     return True

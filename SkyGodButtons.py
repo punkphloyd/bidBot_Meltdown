@@ -137,7 +137,6 @@ class SuzakuButtons(nextcord.ui.View):
         self.drop = 'Suzaku\'s Sune-ate'
         self.stop()
 
-
     @nextcord.ui.button(label="Suzaku's Scythe", style=nextcord.ButtonStyle.red)
     async def scythe(self, button: nextcord.ui.Button, interaction: Interaction):
         await interaction.response.send_message("Suzaku's Scythe", ephemeral=True)

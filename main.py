@@ -141,7 +141,7 @@ async def on_close():
 
 
 # Simple test command - remove prior to pushing production version
-@bot.slash_command(guild_ids=[test_server_id], name="test", description="Slash commands test")
+@bot.slash_command(guild_ids=[server_id], name="test", description="Slash commands test")
 async def test(interaction: Interaction):
     await interaction.response.send_message("Hello, test please")
 

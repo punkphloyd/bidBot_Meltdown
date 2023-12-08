@@ -258,3 +258,69 @@ class HNMSButtons(nextcord.ui.View):
         self.god = 'Other HNMS'
         self.stop()
 
+
+class HENMButtons(nextcord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.god = None
+
+    @nextcord.ui.button(label="Ruinous Rocs", style=nextcord.ButtonStyle.grey)
+    async def roc_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+        await interaction.response.send_message("Ruinous Rocs", ephemeral=True)
+        self.god = 'Rocs'
+        self.stop()
+
+    @nextcord.ui.button(label="Despotic Decapod", style=nextcord.ButtonStyle.grey)
+    async def decapod_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+        await interaction.response.send_message("Despotic Decapod", ephemeral=True)
+        self.god = 'Decapod'
+        self.stop()
+
+    @nextcord.ui.button(label="Sacred Scorpions", style=nextcord.ButtonStyle.grey)
+    async def scorps_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+         await interaction.response.send_message("Sacred Scorpions", ephemeral=True)
+         self.god = 'Scorpions'
+         self.stop()
+
+    # @nextcord.ui.button(label="Mammet - 9999", style=nextcord.ButtonStyle.grey)
+    # async def mammet_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+    #      await interaction.response.send_message("Mammet - 9999", ephemeral=True)
+    #      self.god = 'Mammet'
+    #      self.stop()
+    #
+    # @nextcord.ui.button(label="Tonberry Sovereign", style=nextcord.ButtonStyle.grey)
+    # async def tonberry_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+    #      await interaction.response.send_message("Tonberry Sovereign", ephemeral=True)
+    #      self.god = 'Tonberry'
+    #      self.stop()
+    #
+    # @nextcord.ui.button(label="Ultimega", style=nextcord.ButtonStyle.grey)
+    # async def ultimega_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+    #      await interaction.response.send_message("Ultimega", ephemeral=True)
+    #      self.god = 'Ultimega'
+    #      self.stop()
+    #
+    # @nextcord.ui.button(label="Io", style=nextcord.ButtonStyle.grey)
+    # async def io_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+    #      await interaction.response.send_message("Io", ephemeral=True)
+    #      self.god = 'Io'
+    #      self.stop()
+    #
+    # @nextcord.ui.button(label="Primordial Behemoth", style=nextcord.ButtonStyle.grey)
+    # async def behemoth_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+    #      await interaction.response.send_message("Primordial Behemoth", ephemeral=True)
+    #      self.god = 'Behemoth'
+    #      self.stop()
+    #
+    # @nextcord.ui.button(label="Minogame", style=nextcord.ButtonStyle.grey)
+    # async def minogame_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+    #      await interaction.response.send_message("Minogame", ephemeral=True)
+    #      self.god = 'Minogame'
+    #      self.stop()
+    #
+    # @nextcord.ui.button(label="Council of Zilart", style=nextcord.ButtonStyle.grey)
+    # async def council_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+    #      await interaction.response.send_message("Council", ephemeral=True)
+    #      self.god = 'Council'
+    #      self.stop()
+    #

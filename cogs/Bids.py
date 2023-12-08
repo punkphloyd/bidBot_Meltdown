@@ -7,11 +7,11 @@ from SkyGodButtons import *
 from AreaButtons import *
 from SeaGodButtons import *
 from DynaButtons import *
+from HENMButtons import *
 from datetime import date, time, datetime
 import time
 from sheets import *
 from utils import debug_mode, bid_sort, bid_conv, bid_write
-#from main import pending_bids
 
 
 # BidButtons class - this defines the top level set of buttons with which users will be presented upon the /bid2 function
@@ -52,23 +52,28 @@ class BidButtons(nextcord.ui.View):
         self.value = "HNM"
         self.stop()
 
+    @nextcord.ui.button(label="HENM", style=nextcord.ButtonStyle.blurple)
+    async def henm_bids(self, button: nextcord.ui.Button, interaction: Interaction):
+        await interaction.response.send_message("HENM bids", ephemeral=True)
+        self.value = "HENM"
+        self.stop()
+
 
 # Bids class which contains the logic to implement bid functions either manual (/bid) or button-led (/bid2)
 class Bids(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        #self.pending_bids = []  # Used for delayed bid processing (bids are written to this list and then applied via another function @ 7pm the following day)
 
     #########################################  BID FUNCTION #########################################
 
     # Function to add user bids (manual input)
     # This requires users to add their character name, the item to be bid upon, and the number of points they wish to bid (or increase their existing bid)
-    # Currently function is not intelligent enough to correct spelling errors etc, so user must specify item correctly
+    # Currently function is not intelligent enough to correct spelling errors etc., so user must specify item correctly
     # Does not currently implement a 7 pm bid activation protocol
 
-    @nextcord.slash_command(name="bid", description="Bidbot bid function", guild_ids=[test_server_id])
-    async def bid(self, interaction: Interaction, player, item, points):
+    @nextcord.slash_command(name="bid", description="Bidbot bid function", guild_ids=[server_id])
+    async def bid(self, interaction: Interaction, player, item, points, level):
         # Temporary: make function only accessible to admins
         role = nextcord.utils.get(interaction.guild.roles, name="Admin")
         if role in interaction.user.roles:
@@ -97,136 +102,32 @@ class Bids(commands.Cog):
         player = player.title()
         bid_item = item.title()
         bid_points = int(points)
+        bid_level = int(level)
 
-        # Bid is not checked as valid yet
-        # (since it may be part of multiple bids in sequence but only applied at 7pm, the points check needs to be later)
-        # Invoke bid write function to capture bid in appropriate datafile
-        bid = [bid_time_month, bid_time_date, bid_time_hm, player, bid_item, bid_points]
-        if debug_mode:
-            print(f"Bid to be written: {bid}")
-        print(f"{bid_time} - Writing {bid} to file {log_filename}",file=open(log_filename,'a'))
-        bid_write(bid)
-
-
-        # ********** NEED TO REMOVE FROM BELOW THIS LINE FOR DELAYED BID APPLICATION METHOD ************* #
-
-        # Perform bid validity test and respond accordingly
-        bid_success, message_out = check_bid(player, item, points)
-
-        # If successful, report in discord channel that player has successfully bid their points on the item
+        # Check player and item exist (achieved with check_bid and dummy 0 points)
+        # Points check must occur at point of application (otherwise would be possible for players to submit multiple bids
+        # that (individually) they have points for, but cumulatively they do not
+        bid_success, message_out = check_bid(player, bid_item, 0)
         if bid_success:
-            await interaction.response.send_message(f"{player} has successfully placed a bid of {points} points on {item}")
-
-            # Print success to log file
-            print(f"{bid_time} - Bid success: {bid_success} \n Message out: {message_out}", file=open(log_filename, 'a'))
-
-            bid = [bid_time_month, bid_time_date, bid_time_hm, player, bid_item, bid_points]
-
-
-
-            ######### Note, when the bot is updated to include time-delayed bid application (either in accordance with the fixed 7 pm cut-off, or with the randomised time window) 
-            ######### this is where the primary bid addition function will end. It will populate the array pending_bids and another function will pick up the pending bids at the appropriate time and apply them
-            ######### Presently, however, the bid application code is below and part of this single function
-
-            # Get dictionary containing all player-bid pairs
-            # E.g., Fortitude Torque : Hammer bids 10, Shamrock	bids 7, and	Tasco bids 1
-            # This produces a dictionary which looks like:
-            # { 'Hammer': 10, 'Shamrock': 7, 'Tasco': 1 } 
-            all_bids = get_all_bids(bid_item)
+            await interaction.response.send_message(f"{player} has successfully placed a pending bid of {points} points on {item} - Note the points check will occur at the time of application")
+            bid = [bid_time_month, bid_time_date, bid_time_hm, player, bid_item, bid_points, bid_level]
             if debug_mode:
-                print("Original bids: ")
-                print(all_bids)
+                print(f"Bid to be written: {bid}")
+            bid_write(bid)
 
-            # Check if player has a bid already on this item
-            # If player has already got a bid on this item, need to add the extra bid points to the existing bid entry
-            # And then re-sort and update
-            pre_points = get_player_bid(player, bid_item)
-
-            if pre_points != 0:  # i.e., player has points already in this item
-                new_points = int(bid_points) + int(pre_points)
-                all_bids[player] = new_points
-                if debug_mode:
-                    print("Existing bids updated")
-                    print(all_bids)
-            else:  # pre_points == 0 -> i.e. fresh bid on this item for this player
-                # Fresh bid - add new bid to this dictionary
-                all_bids[player] = bid_points
-
-                if debug_mode:
-                    print("New bid added:")
-                    print(all_bids)
-
-            # bid_conv function required to convert all points values into integer format (they are read from sheets as a string) - otherwise sort won't work
-            all_bids = bid_conv(all_bids)
-            # Sort bids dictionary by points bid
-            all_bids = bid_sort(all_bids)
-
-            if debug_mode:
-                print("Sorted bids: ")
-                print(all_bids)
-
-            if debug_mode:
-                # Printing out in debug mode to ensure that column and row being obtained is the one expected
-                print("column/row for bid_item: ")
-                col, row = find_cell(bid_item)
-                print(f"{col}{row}")
-
-                print("column/row for player: ")
-                colp, rowp = find_cell(player)
-                print(f"{colp}{rowp}")
-
-            if debug_mode:
-                print(f"Implementing new bids onto {bid_item}")
-
-            print(f"Adding bids: {all_bids} onto {bid_item}", file=open(log_filename, 'a'))
-            update_bids(bid_item, all_bids)
-
-            if debug_mode:
-                print("Bids implemented - hopefully")
-            # If successful, report in discord channel that player has successfully bid their points on the item
-            if bid_success:
-                await interaction.response.send_message(f"{player} has successfully placed a bid of {bid_points} points on {bid_item}")
-            # Otherwise, report to the player that the bid has failed and identify the diagnosed cause
-            else:
-                await interaction.response.send_message(f"The attempt for {player} to bid {bid_points} points on item {bid_item} was unsuccessful\n {message_out}")
-
-            # FUNCTIONALITY TO BE ADDED IN V0.2
-            # Add successful bid to pending bids list
-            # bid_pending = [player, item, points]
-            # self.pending_bids.append(bid_pending)
-
-            # Get number of points user has in bids on the item in question
-            pre_bids = get_player_bid(player, item)
-
-        # Otherwise, report to the player that the bid has failed and identify the diagnosed cause
         else:
             await interaction.response.send_message(f"The attempt for {player} to bid {points} points on item {item} was unsuccessful\n {message_out}")
             # Print failure to log file
-            print(f"{bid_time} - Bid success: {bid_success} \n Message out: {message_out}", file=open(log_filename, 'a'))
-
-    ######################################### FUNCTION END ##########################################
-
-    ###################################### REMOVE BID FUNCTION ######################################
-    # Function for players to remove points from their bidded items
-    # This can be limited to admins if required to prevent abuse
-    # Presently not implemented due to change of strategy regarding bid removal arrangements
-    # If this changes again this function will need to be completed
-    @nextcord.slash_command(name="removebid", description="Bidbot remove bid function", guild_ids=[test_server_id])
-    async def remove_bid(self, interaction: Interaction, user, item, points):
-        print("Remove bid function debugging")
-        await interaction.response.send_message(f"{user} is removing {points} points from the item: {item} ")
-
-        # FUNCTION NEEDS TO BE COMPLETED IF REMOVING BID BECOMES AN OPTION
-
-    ######################################### FUNCTION END ##########################################
+        print(f"{bid_time} - Bid success: {bid_success} \n Message out: {message_out}", file=open(log_filename, 'a'))
 
     ###################################### BUTTON BID FUNCTION ######################################
     # This function is the button entry equivalent of the /bid function
     # Due to the button implementation it is quite cumbersome, if this can be refactored and simplified this should be considered
-    # Use of this function requires the user's Discord Display Name to match that of their character on the google sheets (should be case insensitive - to be tested)
-    # Currently (21/09/23) this would require Unholy, Zonero, Elensar, Annasion, Nuppy, Sanarau to change their display names  
-    @nextcord.slash_command(name="bid2", description="Content for items to bid on", guild_ids=[test_server_id])
-    async def bid_buttons(self, interaction: Interaction, bid_points):
+    # Use of this function requires the user's Discord Display Name to match that of their character on the Google sheets (should be case-insensitive - to be tested)
+    # Currently (21/09/23) this would require Unholy & Nuppy to change their display names if they wish to use this method
+
+    @nextcord.slash_command(name="bid2", description="Content for items to bid on", guild_ids=[server_id])
+    async def bid_buttons(self, interaction: Interaction, points, level):
         # Temporary: make function only accessible to admins
         role = nextcord.utils.get(interaction.guild.roles, name="Admin")
         if role in interaction.user.roles:
@@ -237,8 +138,23 @@ class Bids(commands.Cog):
                 await interaction.send("You must be an admin to use this command")
                 print(f"{interaction.user.display_name} does not have the role {role} - may not use the /bid function")
             return
+        bid_points = int(points)
+        bid_level = int(level)
 
+        bid_time = datetime.now()
+        bid_time_hm = bid_time.strftime("%H:%M")
+        bid_time_date = bid_time.strftime("%d")
+        bid_time_month = bid_time.strftime("%m")
+
+        date_now = datetime.now()
+        date_in = date_now.strftime("%Y%m%d")
         bid_time = datetime.now()  # Get time of bid
+        bid_time_min = bid_time.minute
+        # Correction to prevent 3-digit timestamps
+        if bid_time_min < 10:
+            zero = "0"
+        else:
+            zero = ""
 
         date_now = datetime.now()
         date_in = date_now.strftime("%Y%m%d")
@@ -254,14 +170,14 @@ class Bids(commands.Cog):
 
         player = interaction.user.display_name  # Get player name from discord user displayname
         if debug_mode:
-            print(f"{bid_time.hour}{bid_time.minute} User running /bid2 is {player}")
+            print(f"{bid_time.hour}{zero}{bid_time.minute} User running /bid2 is {player}")
 
         if view.value is None:
             if debug_mode:
                 print("View value of none has been reached - this should not be encountered; please examine logs")
             print(f"{player} has attempted a bid at {datetime} which has produced a view.value == None result", file=open(log_filename, 'a'))
 
-        # Each option produces multiple sub-options; majority of code work below is arranging the button interface for users to access
+        # Each option produces multiple sub-options; the majority of the code below is arranging the button interface for users to access
         # User selects sky option in first button options
         elif view.value == 'Sky':
             if debug_mode:
@@ -302,7 +218,27 @@ class Bids(commands.Cog):
                 await interaction.followup.send("Which Seiryu drops would you like to bid on?", view=view3)
                 await view3.wait()
         ###########################
+        # User selects HENM option in first button options
+        elif view.value == 'HENM':
+            if debug_mode:
+                print("HENM has been selected")
+            view2 = HENMButtons()
+            await interaction.followup.send("Which HENM  would you like?", view=view2)
+            await view2.wait()
+            if view2 == 'Rocs':
+                if debug_mode:
+                    print("Rocs has been selected")
+                view3 = RocsButtons()
+                await interaction.followup.send("Which Ruinous Rocs drops would you like to bid on?", view=view3)
+                await view3.wait()
+            elif view2 == 'Decapod':
+                if debug_mode:
+                    print("Decapods has been selected")
+                view3 = RocsButtons()
+                await interaction.followup.send("Which Despotic Decapods drops would you like to bid on?", view=view3)
+                await view3.wait()
 
+        ###########################
         # User selects sea option in first button options
         elif view.value == 'Sea':
             if debug_mode:
@@ -406,8 +342,11 @@ class Bids(commands.Cog):
         # For relic, bid item is concatenation of job and piece (e.g. MNK Legs / RDM Head -1)
         if view.value == 'Dynamis' and not view2.god == 'Dynamis-Lord' and not view2.god == 'Dyna-Tav':
             bid_item = str(view2.god) + " " + str(view3.drop)
+
         else:
             bid_item = view3.drop  # Has this been coded fully in DynaButtons.py? Need to check
+        if debug_mode:
+            print(bid_item)
 
         if debug_mode:
             print(f"{player} has bid {bid_points} points on item {view3.drop} at {bid_time}")
@@ -415,91 +354,29 @@ class Bids(commands.Cog):
         # Print bid details to log file
         print(f"{player} has bid {bid_points} points on item {view3.drop} at {bid_time}", file=open(log_filename, 'a'))
 
-        # Perform bid validity test and respond accordingly
-        bid_success, message_out = check_bid(player, bid_item, bid_points)
+        # Check player and item exist (achieved with check_bid and dummy 0 points)
+        # Points check must occur at point of application (otherwise would be possible for players to submit multiple bids
+        # that (individually) they have points for, but cumulatively they do not
+        bid_success, message_out = check_bid(player, bid_item, 0)
+        if bid_success:
+            await interaction.response.send_message(f"{player} has successfully placed a pending bid of {points} points on {bid_item} - Note the points check will occur at the time of application")
+            bid = [bid_time_month, bid_time_date, bid_time_hm, player, bid_item, bid_points, bid_level]
+            if debug_mode:
+                print(f"Bid to be written: {bid}")
+            bid_write(bid)
 
-        if not bid_success:
-            print("bid failed")
-            return
-        # This bid_points int conversion needs to take place after the above check_bid function
-        # otherwise function hangs/fails due to lack of isnumeric() function in the int type
-        bid_points = int(bid_points)
-
-        if debug_mode:
-            print(bid_success)
-            print(message_out)
-
+        else:
+            await interaction.response.send_message(f"The attempt for {player} to bid {bid_points} points on item {bid_item} was unsuccessful\n {message_out}")
+            # Print failure to log file
         print(f"{bid_time} - Bid success: {bid_success} \n Message out: {message_out}", file=open(log_filename, 'a'))
 
-        ######### Note, when the bot is updated to include time-delayed bid application (either in accordance with the fixed 7 pm cut-off, or with the randomised time window) 
-        ######### this is where the primary bid addition function will end. It will populate the array pending_bids and another function will pick up the pending bids at the appropriate time and apply them
-        ######### Presently, however, the bid application code is below and part of this single function
-
-        # Get dictionary containing all player-bid pairs
-        # E.g., Fortitude Torque : Hammer bids 10, Shamrock	bids 7, and	Tasco bids 1
-        # This produces a dictionary which looks like:
-        # { 'Hammer': 10, 'Shamrock': 7, 'Tasco': 1 } 
-        all_bids = get_all_bids(bid_item)
-        if debug_mode:
-            print("Original bids: ")
-            print(all_bids)
-
-        # Check if player has a bid already on this item
-        # If player has already got a bid on this item, need to add the extra bid points to the existing bid entry
-        # And then re-sort and update
-        pre_points = get_player_bid(player, bid_item)
-        if pre_points != 0:
-            # Player already has points on this item, update dictionary value to reflect
-            new_points = int(bid_points) + int(pre_points)
-            all_bids[player] = new_points
-            if debug_mode:
-                print("Existing bid updated:")
-                print(all_bids)
-        else:
-            # Add new bid to this dictionary
-            all_bids[player] = bid_points
-
-            if debug_mode:
-                print("New bid added:")
-                print(all_bids)
-
-        # bid_conv function required to convert all points values into integer format (they are read from sheets as a string) - otherwise sort won't work
-        all_bids = bid_conv(all_bids)
-        # Sort bids dictionary by points bid
-        all_bids = bid_sort(all_bids)
-
-        if debug_mode:
-            print("Sorted bids: ")
-            print(all_bids)
-
-        if debug_mode:
-            # Printing out in debug mode to ensure that column and row being obtained is the one expected
-            print("column/row for bid_item: ")
-            col, row = find_cell(bid_item)
-            print(f"{col}{row}")
-
-            print("column/row for player: ")
-            colp, rowp = find_cell(player)
-            print(f"{colp}{rowp}")
-
-        if debug_mode:
-            print(f"Implementing new bids onto {bid_item}")
-
-        print(f"Adding bids: {all_bids} onto {bid_item}", file=open(log_filename, 'a'))
-        update_bids(bid_item, all_bids)
-
-        if debug_mode:
-            print("Bids implemented - hopefully")
-        # If successful, report in discord channel that player has successfully bid their points on the item
-        if bid_success:
-            await interaction.followup.send(f"{player} has successfully placed a bid of {bid_points} points on {bid_item}")
-        # Otherwise, report to the player that the bid has failed and identify the diagnosed cause
-        else:
-            await interaction.followup.send(f"The attempt for {player} to bid {bid_points} points on item {bid_item} was unsuccessful\n {message_out}")
-
-
 ######################################### FUNCTION END ##########################################
+    @nextcord.slash_command(name="font_test", description="return font colour of cell", guild_ids=[server_id])
+    async def font_test(self, interaction: Interaction, column, row):
+        colour = test_font_colour(row, column)
+        await interaction.response.send_message(f"Colour of cell {column}{row} is: {colour}")
 
-# Function to run the cog within the bot
+
+# run the cog within the bot
 def setup(bot):
     bot.add_cog(Bids(bot))

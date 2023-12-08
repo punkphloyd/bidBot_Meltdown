@@ -149,6 +149,11 @@ def get_player_bid(player, item):
     return pre_bid
 
 
+# Function to get font colour of a bid value (indicator of +/- level 65 on bid)
+def get_font_colour(row, col):
+    cell = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=f"Bids!{col}{row}").execute()
+
+
 # Function to return all the bids against any item in pairs of "Player: Bid", held in a dictionary
 # Keys = Player Names
 # Values = Points
@@ -243,3 +248,9 @@ def update_bids(item, dicto):
     return
 
 
+# TEMPORARY TEST FUNCTIONS - DO NOT NEED ONCE TESTING IS COMPLETED
+def test_font_colour(row, column):
+    fields = 'sheets(data(rowData(values(textFormatRuns))))'
+    cell = sheet.get(spreadsheetId=SPREADSHEET_ID, range=f"Bids!{column}{row}", fields=fields).execute()
+
+    return cell
